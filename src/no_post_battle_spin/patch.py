@@ -10,6 +10,7 @@ def _stop_vehicle(vehicle):
     veh_appearance = vehicle.appearance
 
     # Stop hull rotation
+    veh_filter.reset()
     veh_filter.ignoreInputs = True
 
     # Stop tracks from moving
