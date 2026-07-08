@@ -14,24 +14,18 @@ def _stop_own_vehicle(avatar):
     veh_filter = vehicle.filter
     veh_appearance = vehicle.appearance
 
-    # Stop the vehicle from spinning
-    veh_filter.ignoreInputs = True                    # freeze hull rotation (primary fix)
-    veh_filter.velocityErrorCompensation = 100.0      # snap to server (what death does)
+    # Stop hull rotation
+    veh_filter.ignoreInputs = True
 
-    # Stop the tracks from moving
-    veh_filter.setTracksSpeed(0.0, True, 0.0, True)   # stop track band scroll
-    veh_appearance.trackScrollController.setData(None)          # stop track texture scroll
-    veh_appearance.wheelsAnimator.stopAnimatingWheels(True, True)   # road wheels + track nodes
+    # Stop tracks from moving
+    veh_filter.setTracksSpeed(0.0, True, 0.0, True)
+    veh_appearance.trackScrollController.setData(None)
 
     # Disable dirt particles thrown by tracks
-    veh_appearance.disableCustomEffects()
     veh_appearance.customEffectManager.disableDefaultSelectors(True, True)
 
-    # Stop the engine sound
+    # Stop engine sound
     vehicle.turnoffThrottle()
-    veh_physics = veh_filter.getVehiclePhysics()
-    if veh_physics is not None:
-        veh_physics.movementSignals = 0                # engine "is-moving" bitmask off
 
     log('post-battle stop applied')
 
