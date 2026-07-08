@@ -5,12 +5,7 @@ _METHOD = '_PlayerAvatar__onArenaPeriodChange'
 _oPlayerAvatar__onArenaPeriodChange = None
 
 
-def _stop_own_vehicle(avatar):
-    import BigWorld
-    vehicle = BigWorld.entity(avatar.playerVehicleID)
-    if vehicle is None:
-        return
-
+def _stop_vehicle(vehicle):
     veh_filter = vehicle.filter
     veh_appearance = vehicle.appearance
 
@@ -27,6 +22,15 @@ def _stop_own_vehicle(avatar):
     # Stop engine sound
     vehicle.turnoffThrottle()
 
+
+def _stop_all_vehicles(avatar):
+    import BigWorld
+
+    for vehicle_id in avatar.arena.vehicles:
+        vehicle = BigWorld.entities.get(vehicle_id)
+        if vehicle and vehicle.isStarted and vehicle.isAlive():
+            _stop_vehicle(vehicle)
+
     log('post-battle stop applied')
 
 
@@ -35,7 +39,7 @@ def _patched_onArenaPeriodChange(self, period, periodEndTime, periodLength, peri
     try:
         from constants import ARENA_PERIOD
         if period == ARENA_PERIOD.AFTERBATTLE:
-            _stop_own_vehicle(self)
+            _stop_all_vehicles(self)
     except Exception:
         import traceback
         log('post-battle stop crashed:\n' + traceback.format_exc())
