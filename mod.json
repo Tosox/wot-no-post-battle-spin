@@ -3,6 +3,8 @@
     "version": "1.0.0",
     "name": "No Post-Battle Spin",
     "description": "Stops your tank from pivoting in place after the battle ends",
+    "author": "Tosox",
+    "website": "https://github.com/Tosox/wot-no-post-battle-spin",
     "extra_files": [
         { "src": "README.md", "dst": "README.md" },
         { "src": "CHANGELOG.md", "dst": "CHANGELOG.md" },
