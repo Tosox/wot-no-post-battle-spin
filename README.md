@@ -1,88 +1,65 @@
-# No Post-Battle Spin — World of Tanks mod
+# No Post-Battle Spin
 
-Stops your tank from **turning in place after the battle ends**. If you're
-holding a steering key when time runs out, a turretless tank (and, less
-obviously, any tank) keeps pivoting on the spot while the results screen shows.
-This mod freezes the hull the moment the battle ends.
+[![Downloads (All Time)](https://img.shields.io/github/downloads/Tosox/wot-no-post-battle-spin/total.svg?label=Downloads%20(All%20Time))](https://github.com/Tosox/wot-no-post-battle-spin/releases) [![Downloads (Latest Release)](https://img.shields.io/github/downloads/Tosox/wot-no-post-battle-spin/latest/total.svg?label=Downloads%20(Latest%20Release))](https://github.com/Tosox/wot-no-post-battle-spin/releases/latest)
 
-## The bug
+## 📜 Description
 
-Turretless and limited-traverse tanks (TDs, SPGs) aim by **rotating the hull to
-point the gun at the target**. When you aim past the gun's traverse, the client
-continuously tells the server to *track the aim point with the gun*
-(`VehicleGunRotator` → `cell.trackRelativePointWithGun` /
-`vehicle_trackWorldPointWithGun`), and the server slews the hull to follow.
-Stopping requires the client to send `stopTrackingOnServer()` →
-`cell.vehicle_stopTrackingWithGun(...)`, which normally fires from the gun
-rotator's tick loop when you stop aiming.
+When a battle ends and the tank is still steering, it keeps pivoting
+on the spot with the tracks still rolling, engine revving and dust flying.
+It's most obvious on turretless tanks meaning TDs and SPGs which steer by rotating the hull.
 
-At battle end (`Avatar.py`): the arena period changes to `AFTERBATTLE`, which
-calls `__setIsOnArena(False)` → `gunRotator.stop()`. That **cancels the gun
-rotator's tick timer but never sends the stop-tracking command**. So the
-server's last "track this point" order stays in effect and the hull keeps
-turning while the results screen shows.
+This mod fixes this phenomenon by stopping every tank once the battle is over.
 
-## The fix
+## 🔧 Installation
 
-The mod patches `PlayerAvatar.__onArenaPeriodChange`: after the original runs,
-on `AFTERBATTLE` it calls `avatar.gunRotator.stopTrackingOnServer()` — the exact
-stop command the cancelled tick loop would otherwise have sent — which tells the
-server to hold the current yaw/pitch and stop slewing the hull. As a belt-and-
-suspenders it also zeroes any latched manual steering-key input
-(`vehicle.notifyInputKeysDown(0, 0, False)`). It only touches your own,
-still-driving vehicle, and the patch is restored in `fini()`. Verified against
-decompiled client scripts for **v2.3.0.1**.
+* Download the [latest release](https://github.com/Tosox/wot-no-post-battle-spin/releases/latest)
+* Drop the `.wotmod` into your game's mods folder: `World_of_Tanks_EU\mods\<version>\`
+* Launch the game
 
-## Install (for players)
+## 📝 Changelog
 
-Copy the built mod into your game's mods folder:
+You can check out the latest changes in [`CHANGELOG.md`](CHANGELOG.md).
 
-```
-dist/de.tosox.no_post_battle_spin_1.0.0.wotmod
-        ->  C:\Games\World_of_Tanks_EU\mods\2.3.0.1\
-```
+## 🎥 Preview
 
-There's nothing to configure.
+<img src="readme-res/preview.gif" alt="preview" width="700"/>
 
-## Build (for developers)
+## 🛠️ Build from source
 
-Requires **Python 2.7** (compiles the game bytecode) and **Python 3** (runs the
-script). Paths are configured at the top of `build.py`.
+### Prerequisites
+
+* [Python 2.7.18](https://www.python.org/downloads/release/python-2718/) — compiles the game bytecode
+
+### Setup
+
+1. Point the `PYTHON27` environment variable at your Python 2.7 executable
+   (e.g. `C:\Python27\python.exe`). Skip this if you run `build.py` with Python 2.7 directly.
+2. For `--install`, copy `build.local.example.json` to `build.local.json` and fill
+   in your `game_dir` and `game_version`.
+
+### Build
 
 ```bash
-python build.py            # -> dist/de.tosox.no_post_battle_spin_1.0.0.wotmod
-python build.py --install  # also copies the .wotmod into mods/<version>
+python build.py            # -> dist/<id>_<version>.wotmod
+python build.py --install  # also copies it into the game's mods/<version> folder
 ```
 
-`build.py` compiles `src/` into `build/py_stage/` and maps it into the game's
-`res/` tree: the thin entry module goes to `scripts/client/gui/mods/`, and the
-`no_post_battle_spin` package to `scripts/client/`. `meta.xml` is rendered from
-`meta.xml.in`. All generated files land in `build/` (and `dist/`) — nothing
-generated ever sits next to source.
+The mod is configured through `mod.json`.
 
-## Testing
+## ⚙️ How it works
 
-Watch `python.log` at the game root for the mod's output:
+The mod patches `PlayerAvatar.__onArenaPeriodChange`. When the arena period
+changes to `AFTERBATTLE`, it walks every vehicle still alive in the arena and stops each one:
 
-```
-[no_post_battle_spin] battle-end hull stop armed
-[no_post_battle_spin] loaded
-```
+* `filter.reset()`: clears the client-side motion extrapolation
+  that keeps remote tanks' hulls rotating after the server stops streaming updates
+* `filter.ignoreInputs`: freezes your own hull, which is driven by the still-running
+  local physics simulation
+* `filter.setTracksSpeed(...)`: zeroes the track speed
+* `trackScrollController.setData(None)`: clears the track-scroll texture, so the tracks stop
+* `customEffectManager.disableDefaultSelectors(...)`: disables the dirt/dust particle selectors thrown up by the tracks
+* `turnoffThrottle()`: cuts the engine-rev sound
 
-To confirm end-to-end: take a **turretless** tank into a battle, drive so the
-battle ends (or wait out the timer) while **holding a steering key**, and check
-that the hull stops instead of pivoting as the results screen appears.
+## 📄 License
 
-## Project layout
-
-```
-src/mod_no_post_battle_spin.py     thin entry point (init/fini) -> gui/mods/
-src/no_post_battle_spin/           the mod package (Python 2.7) -> scripts/client/
-  __init__.py                        NoPostBattleSpinMod lifecycle singleton (guarded)
-  log.py                             tiny logging helper
-  patch.py                           the AFTERBATTLE hull-stop patch
-meta.xml.in                        .wotmod metadata template
-build.py                           compile + package + install helper (Python 3)
-build/                             generated artifacts (.pyc staging) - gitignored
-dist/                              built .wotmod output - gitignored
-```
+Distributed under the GNU General Public License v3.0. See [`LICENSE`](LICENSE) for more information.
