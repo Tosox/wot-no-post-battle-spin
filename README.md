@@ -22,7 +22,7 @@ You can check out the latest changes in [`CHANGELOG.md`](CHANGELOG.md).
 
 ## 🎥 Preview
 
-| [![](https://ytcards.demolab.com/?id=MFXvPUsOdvg&title=No+Post-Battle+Spin+Demo&timestamp=1776170501&width=700 "No Post-Battle Spin Demo")](https://youtu.be/MFXvPUsOdvg) |
+| [![](https://ytcards.demolab.com/?id=MFXvPUsOdvg&title=No+Post-Battle+Spin+Demo&timestamp=1783688823&width=700 "No Post-Battle Spin Demo")](https://youtu.be/MFXvPUsOdvg) |
 |---|
 
 ## 🛠️ Build from source
