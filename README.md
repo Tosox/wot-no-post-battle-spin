@@ -59,7 +59,6 @@ changes to `AFTERBATTLE`, it walks every vehicle still alive in the arena and st
 * `filter.setTracksSpeed(...)`: zeroes the track speed
 * `trackScrollController.setData(None)`: clears the track-scroll texture, so the tracks stop
 * `customEffectManager.disableDefaultSelectors(...)`: disables the dirt/dust particle selectors thrown up by the tracks
-* `turnoffThrottle()`: cuts the engine-rev sound
 
 ## 📄 License
 
