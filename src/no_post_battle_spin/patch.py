@@ -53,8 +53,8 @@ def _stop_when_settled(vehicle_id):
     if not vehicle:
         return
 
-    # Skip vehicles with turrets
-    if not vehicle.typeDescriptor.isYawHullAimingAvailable:
+    # Skip vehicles with a full 360-degree turret
+    if vehicle.typeDescriptor.gun.turretYawLimits is None:
         return
 
     deadline = BigWorld.time() + _TIMEOUT
