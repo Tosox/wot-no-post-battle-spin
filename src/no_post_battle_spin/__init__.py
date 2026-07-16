@@ -1,25 +1,19 @@
 from no_post_battle_spin.log import log
+from no_post_battle_spin import patch
+from no_post_battle_spin.util import safe
 
 
 class NoPostBattleSpinMod(object):
 
+    @safe
     def init(self):
-        try:
-            from no_post_battle_spin import patch
-            patch.apply_patch()
-            log('loaded')
-        except Exception:
-            import traceback
-            log('init failed:\n' + traceback.format_exc())
+        patch.apply_patch()
+        log('loaded')
 
+    @safe
     def fini(self):
-        try:
-            from no_post_battle_spin import patch
-            patch.remove_patch()
-            log('unloaded')
-        except Exception:
-            import traceback
-            log('fini failed:\n' + traceback.format_exc())
+        patch.remove_patch()
+        log('unloaded')
 
 
 g_noPostBattleSpinMod = NoPostBattleSpinMod()
