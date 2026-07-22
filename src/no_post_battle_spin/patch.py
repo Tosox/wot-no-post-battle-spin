@@ -2,14 +2,12 @@ from no_post_battle_spin.log import log
 from no_post_battle_spin.util import safe
 
 
-_METHOD = '_PlayerAvatar__onArenaPeriodChange'
-_oPlayerAvatar__onArenaPeriodChange = None
-
-
 _POLL = 0.05
 _ROT_MIN = 0.1
 _TIMEOUT = 3.0
 _FREEZE_DELAY = 0.25
+
+_arena_period_listener_active = False
 
 
 def _is_pivoting(vehicle):
@@ -86,36 +84,34 @@ def _stop_when_settled(vehicle_id):
 
 
 @safe
-def _handle_period_change(avatar, period):
+def _on_arena_period_change(period, *args):
     from constants import ARENA_PERIOD
+    if period != ARENA_PERIOD.AFTERBATTLE:
+        return
 
-    # Try settle valid vehicles when the battle ends
-    if period == ARENA_PERIOD.AFTERBATTLE:
-        for vehicle_id in avatar.arena.vehicles:
-            _stop_when_settled(vehicle_id)
+    import BigWorld
+    avatar = BigWorld.player()
 
-
-def _patched_onArenaPeriodChange(self, period, periodEndTime, periodLength, periodAdditionalInfo):
-    _oPlayerAvatar__onArenaPeriodChange(self, period, periodEndTime, periodLength, periodAdditionalInfo)
-    _handle_period_change(self, period)
+    # Try to settle valid vehicles when the battle ends
+    for vehicle_id in avatar.arena.vehicles:
+        _stop_when_settled(vehicle_id)
 
 
 def apply_patch():
-    global _oPlayerAvatar__onArenaPeriodChange
+    global _arena_period_listener_active
+    if _arena_period_listener_active:
+        return
 
-    from Avatar import PlayerAvatar
-    if _oPlayerAvatar__onArenaPeriodChange is None:
-        _oPlayerAvatar__onArenaPeriodChange = getattr(PlayerAvatar, _METHOD)
-
-    setattr(PlayerAvatar, _METHOD, _patched_onArenaPeriodChange)
+    from PlayerEvents import g_playerEvents
+    g_playerEvents.onArenaPeriodChange += _on_arena_period_change
+    _arena_period_listener_active = True
 
 
 def remove_patch():
-    global _oPlayerAvatar__onArenaPeriodChange
-    if _oPlayerAvatar__onArenaPeriodChange is None:
+    global _arena_period_listener_active
+    if not _arena_period_listener_active:
         return
 
-    from Avatar import PlayerAvatar
-    setattr(PlayerAvatar, _METHOD, _oPlayerAvatar__onArenaPeriodChange)
-
-    _oPlayerAvatar__onArenaPeriodChange = None
+    from PlayerEvents import g_playerEvents
+    g_playerEvents.onArenaPeriodChange -= _on_arena_period_change
+    _arena_period_listener_active = False
